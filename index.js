@@ -15,6 +15,26 @@ const corsOptions = {
 app.use(cors(corsOptions))
 app.use(express.json())
 
+
+
+const verifyJWT=(req, res, next) =>{
+  const authorization=req.headers.authorization;
+  if(!authorization){
+    return res.status(401).send({error:true , message:'Unauthorized Access'})
+  }
+
+  const token= authorization.split(' ')[1]
+
+  jwt.verify(token , process.env.ACCESS_TOKEN_SECRET , (err, decoded) =>{
+    if(err){
+      return res.status(401).send({error:true , message:'Unauthorized Access'})
+    }
+    req.decoded = decoded;
+    next();
+  })
+
+}
+
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 
 
@@ -63,12 +83,24 @@ async function run() {
         res.send(result)
     })
 
+    app.get('/users' , async(req ,res) =>{
+      const result = await usersCollection.find().toArray()
+      res.send(result)
+    })
+
 
     // classes api
     app.get('/classes' , async (req,res) =>{
         const result = await classesCollection.find().toArray()
         res.send(result)
     })
+
+   app.post('/selectedclasses' , async (req, res) =>{
+      const cla =req.body
+      
+      const result = await selectClassCollection.insertOne(cla)
+      res.send(result)
+   })    
 
 
 
