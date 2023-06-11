@@ -1,6 +1,7 @@
 const express = require('express')
 const app = express()
 const cors = require('cors')
+const jwt =require('jsonwebtoken')
 require('dotenv').config()
 const port = process.env.PORT || 5000
 
@@ -33,9 +34,16 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    const usersCollection = client.db('fsaDb').collection('users')
-   
+    const usersCollection = client.db('fsaDb').collection('users');
+    const classesCollection = client.db('fsaDb').collection('classes');
+    const selectClassCollection = client.db('fsaDb').collection('selectClass');
 
+   
+    app.post('/jwt' , (req,res )=>{
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET,{expiresIn:'7d'})
+      res.send({token})
+    })
 
 
     // save user info in db
@@ -54,6 +62,14 @@ async function run() {
         console.log(result);
         res.send(result)
     })
+
+
+    // classes api
+    app.get('/classes' , async (req,res) =>{
+        const result = await classesCollection.find().toArray()
+        res.send(result)
+    })
+
 
 
 
