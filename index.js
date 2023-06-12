@@ -68,7 +68,7 @@ async function run() {
 
     // save user info in db
 
-    app.put('/users/:email' ,async (req, res) =>{
+    app.put('/users/:email' ,  async (req, res) =>{
         const email = req.params.email;
         const user = req.body;
         const query = {email: email}
@@ -83,7 +83,7 @@ async function run() {
         res.send(result)
     })
 
-    app.get('/users' , async(req ,res) =>{
+    app.get('/users' , verifyJWT, async(req ,res) =>{
       const result = await usersCollection.find().toArray()
       res.send(result)
     })
@@ -100,7 +100,24 @@ async function run() {
       
       const result = await selectClassCollection.insertOne(cla)
       res.send(result)
-   })    
+   }) 
+   
+   app.get('/selectedclasses',verifyJWT, async (req,res)=>{
+      const email = req.query.email;
+      if(!email){
+        return res.send([])
+      }
+      const query = {email : email};
+      const result = await selectClassCollection.find(query).toArray()
+      res.send(result)
+   })
+
+   app.delete('/selectedclasses/:id', async (req, res) =>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await selectClassCollection.deleteOne(query);
+      res.send(result)
+   })
 
 
 
