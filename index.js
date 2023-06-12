@@ -112,6 +112,31 @@ async function run() {
       res.send(result)
     })
 
+    app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+          $set: {
+              status: 'admin'
+          }
+      }
+      const result = await usersCollection.updateOne(filter, updatedDoc)
+      res.send(result)
+  })
+
+    app.patch('/users/instructor/:id', async (req, res) => {
+      const id = req.params.id
+      // console.log(id)
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+          $set: {
+              status: 'instructor'
+          }
+      }
+      const result = await usersCollection.updateOne(filter, updatedDoc)
+      res.send(result)
+  })
+
 
 
     app.get('/users', verifyJWT,verifyAdmin, async (req, res) => {
@@ -132,7 +157,6 @@ async function run() {
 
     app.post('/selectedclasses', async (req, res) => {
       const cla = req.body
-
       const result = await selectClassCollection.insertOne(cla)
       res.send(result)
     })
