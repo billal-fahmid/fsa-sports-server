@@ -66,6 +66,8 @@ async function run() {
     })
 
 
+
+
     // save user info in db
 
     app.put('/users/:email' ,  async (req, res) =>{
@@ -89,11 +91,20 @@ async function run() {
     })
 
 
+
+
     // classes api
     app.get('/classes' , async (req,res) =>{
         const result = await classesCollection.find().toArray()
         res.send(result)
     })
+
+    app.post('/classes' , verifyJWT,async(req,res) =>{
+      const addClass = req.body;
+      const result =await classesCollection.insertOne(addClass)
+      res.send(result)
+    })
+
 
    app.post('/selectedclasses' , async (req, res) =>{
       const cla =req.body
