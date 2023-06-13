@@ -171,6 +171,13 @@ async function run() {
       res.send(result)
     })
 
+    // approved Classes get
+    app.get('/classes/approvedClasses' ,async(req,res) =>{
+      const query ={status:'approved'}
+      const result = await classesCollection.find(query).toArray()
+      res.send(result)
+    })
+
 
 
     app.post('/selectedclasses', async (req, res) => {
@@ -240,7 +247,7 @@ async function run() {
       res.send(result)
 
     })
-    
+
     app.patch('/classes/denied/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -252,6 +259,20 @@ async function run() {
       const result = await classesCollection.updateOne(filter,updatedDoc)
       res.send(result)
 
+    })
+
+    app.patch('/classes/feedback' ,  async(req,res) =>{
+      const id = req.query.id;
+      const feedback = req.query.feedback;
+      // console.log(id, feedback)
+      const filter = {_id: new ObjectId(id)}
+      const updatedDoc ={
+        $set:{
+          feedback:feedback
+        }
+      }
+      const result = await classesCollection.updateOne(filter, updatedDoc);
+      res.send(result)
     })
 
 
