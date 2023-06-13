@@ -3,6 +3,9 @@ const app = express()
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
+
+
 const port = process.env.PORT || 5000
 
 // middleware
@@ -57,6 +60,7 @@ async function run() {
     const usersCollection = client.db('fsaDb').collection('users');
     const classesCollection = client.db('fsaDb').collection('classes');
     const selectClassCollection = client.db('fsaDb').collection('selectClass');
+    const paymentsCollection = client.db('fsaDb').collection('payments');
 
 
     app.post('/jwt', (req, res) => {
@@ -172,8 +176,8 @@ async function run() {
     })
 
     // approved Classes get
-    app.get('/classes/approvedClasses' ,async(req,res) =>{
-      const query ={status:'approved'}
+    app.get('/classes/approvedClasses', async (req, res) => {
+      const query = { status: 'approved' }
       const result = await classesCollection.find(query).toArray()
       res.send(result)
     })
@@ -209,6 +213,60 @@ async function run() {
       res.send(result)
     })
 
+
+
+
+
+    // create payment intent
+    app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      // console.log(price, amount)
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      })
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    })
+
+    // payments api
+    app.post('/payments', verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const insertedResult = await paymentsCollection.insertOne(payment);
+      // const query = { _id: { $in: payment.cartItems.map(id => new ObjectId(id)) } }
+      const queryUpdate = { _id: new ObjectId(payment.enrolledClassId) }
+      const queryDelete = { _id: new ObjectId(payment.deletedId) }
+      const deleteResult = await selectClassCollection.deleteOne(queryDelete)
+      // console.log(payment , queryUpdate)
+      const updateClasseSeatsEnrolled = {
+        $set: {
+          availableSeats: payment.availableSeats - 1,
+          enrolled: payment.enrolled ? payment.enrolled++ : 1
+        }
+      }
+      const updateClasseSeatsEnrolledFinal = await classesCollection.updateOne(queryUpdate, updateClasseSeatsEnrolled)
+
+      res.send({ insertedResult, deleteResult ,updateClasseSeatsEnrolledFinal})
+    })
+
+  
+    // app.get('/enrollen' , verifyJWT ,async(req ,res) =>{
+    //   const 
+    // })
+
+
+
+
+
+
+
+
+
+
+
     // add class for instructor
     app.post('/classes', verifyJWT, verifyInstructor, async (req, res) => {
       const addClass = req.body;
@@ -236,19 +294,19 @@ async function run() {
 
     // update class for instructor
 
-    app.patch('/classes/updateclass/:id' , verifyJWT, verifyInstructor , async(req, res) =>{
+    app.patch('/classes/updateclass/:id', verifyJWT, verifyInstructor, async (req, res) => {
       const id = req.params.id;
       const data = req.body;
-      const filter = {_id: new ObjectId(id)}
-      const updatedDoc={
-        $set:{
-          name:data.name,
-          price:data.price,
-          availableSeats:data.availableSeats,
-        
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          name: data.name,
+          price: data.price,
+          availableSeats: data.availableSeats,
+
         }
       }
-      const result = await classesCollection.updateOne(filter,updatedDoc)
+      const result = await classesCollection.updateOne(filter, updatedDoc)
       res.send(result)
     })
 
@@ -265,7 +323,7 @@ async function run() {
           status: 'approved'
         }
       }
-      const result = await classesCollection.updateOne(filter,updatedDoc)
+      const result = await classesCollection.updateOne(filter, updatedDoc)
       res.send(result)
 
     })
@@ -278,19 +336,19 @@ async function run() {
           status: 'denied'
         }
       }
-      const result = await classesCollection.updateOne(filter,updatedDoc)
+      const result = await classesCollection.updateOne(filter, updatedDoc)
       res.send(result)
 
     })
 
-    app.patch('/classes/feedback' ,  async(req,res) =>{
+    app.patch('/classes/feedback', async (req, res) => {
       const id = req.query.id;
       const feedback = req.query.feedback;
       // console.log(id, feedback)
-      const filter = {_id: new ObjectId(id)}
-      const updatedDoc ={
-        $set:{
-          feedback:feedback
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          feedback: feedback
         }
       }
       const result = await classesCollection.updateOne(filter, updatedDoc);
