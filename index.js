@@ -234,6 +234,28 @@ async function run() {
 
     })
 
+    // update class for instructor
+
+    app.patch('/classes/updateclass/:id' , verifyJWT, verifyInstructor , async(req, res) =>{
+      const id = req.params.id;
+      const data = req.body;
+      const filter = {_id: new ObjectId(id)}
+      const updatedDoc={
+        $set:{
+          name:data.name,
+          price:data.price,
+          availableSeats:data.availableSeats,
+        
+        }
+      }
+      const result = await classesCollection.updateOne(filter,updatedDoc)
+      res.send(result)
+    })
+
+
+
+
+
     // admin approved and pending and denied
     app.patch('/classes/approved/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
