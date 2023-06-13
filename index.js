@@ -71,20 +71,21 @@ async function run() {
 
       const user = await usersCollection.findOne(query)
       if (user?.status !== 'admin') {
-          return res.status(403).send({ error: true, message: 'forbidden message' })
+        return res.status(403).send({ error: true, message: 'forbidden message' })
       }
       next()
-  }
+    }
+
     const verifyInstructor = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email };
 
       const user = await usersCollection.findOne(query)
       if (user?.status !== 'instructor') {
-          return res.status(403).send({ error: true, message: 'forbidden message' })
+        return res.status(403).send({ error: true, message: 'forbidden message' })
       }
       next()
-  }
+    }
 
 
 
@@ -108,48 +109,55 @@ async function run() {
 
 
 
-    app.get('/users/admin/:email' , verifyJWT , async (req,res) =>{
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
-      if(req.decoded.email !== email){
-        return res.send({admin:false})
+      if (req.decoded.email !== email) {
+        return res.send({ admin: false })
       }
 
-      const query = {email: email}
+      const query = { email: email }
       const user = await usersCollection.findOne(query)
       // console.log(user)
-      const result =  user?.status 
+      const result = user?.status
       // console.log({result})
       res.send(result)
     })
 
-    app.patch('/users/admin/:id', async (req, res) => {
+    app.patch('/users/admin/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
-          $set: {
-              status: 'admin'
-          }
+        $set: {
+          status: 'admin'
+        }
       }
       const result = await usersCollection.updateOne(filter, updatedDoc)
       res.send(result)
-  })
+    })
 
-    app.patch('/users/instructor/:id', async (req, res) => {
+    app.patch('/users/instructor/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id
       // console.log(id)
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
-          $set: {
-              status: 'instructor'
-          }
+        $set: {
+          status: 'instructor'
+        }
       }
       const result = await usersCollection.updateOne(filter, updatedDoc)
       res.send(result)
-  })
+    })
+
+    app.delete('/users/delete/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await usersCollection.deleteOne(query)
+      res.send(result)
+    })
 
 
 
-    app.get('/users', verifyJWT,verifyAdmin, async (req, res) => {
+    app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray()
       res.send(result)
     })
@@ -195,7 +203,7 @@ async function run() {
     })
 
     // add class for instructor
-    app.post('/classes', verifyJWT, verifyInstructor,async (req, res) => {
+    app.post('/classes', verifyJWT, verifyInstructor, async (req, res) => {
       const addClass = req.body;
       const result = await classesCollection.insertOne(addClass)
       res.send(result)
@@ -215,6 +223,33 @@ async function run() {
       }
       const query = { instructorEmail: email }
       const result = await classesCollection.find(query).toArray()
+      res.send(result)
+
+    })
+
+    // admin approved and pending and denied
+    app.patch('/classes/approved/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: 'approved'
+        }
+      }
+      const result = await classesCollection.updateOne(filter,updatedDoc)
+      res.send(result)
+
+    })
+    
+    app.patch('/classes/denied/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: 'denied'
+        }
+      }
+      const result = await classesCollection.updateOne(filter,updatedDoc)
       res.send(result)
 
     })
