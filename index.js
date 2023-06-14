@@ -61,6 +61,7 @@ async function run() {
     const classesCollection = client.db('fsaDb').collection('classes');
     const selectClassCollection = client.db('fsaDb').collection('selectClass');
     const paymentsCollection = client.db('fsaDb').collection('payments');
+    const reviewsCollection = client.db('fsaDb').collection('reviews');
 
 
     app.post('/jwt', (req, res) => {
@@ -91,6 +92,11 @@ async function run() {
       next()
     }
 
+    //review api
+    app.get('/reviews' , async (req,res) =>{
+      const result = await reviewsCollection.find().toArray()
+      res.send(result)
+    })
 
 
 
