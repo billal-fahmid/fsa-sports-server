@@ -253,11 +253,21 @@ async function run() {
     })
 
   
-    // app.get('/enrollen' , verifyJWT ,async(req ,res) =>{
-    //   const 
-    // })
+    app.get('/enrolled/:email' , verifyJWT ,async(req ,res) =>{
+      const email = req.params.email;
+      const query = {email:email}
+      const result = await paymentsCollection.find(query).sort({ date: -1 }).toArray()
+      res.send(result)
+    })
 
 
+
+    // get instructor in users 
+    app.get('/user/instructor' , async(req , res ) =>{
+      const query = {status :'instructor'}
+      const result = await usersCollection.find(query).toArray()
+      res.send(result)
+    })
 
 
 
