@@ -62,6 +62,8 @@ async function run() {
     const selectClassCollection = client.db('fsaDb').collection('selectClass');
     const paymentsCollection = client.db('fsaDb').collection('payments');
     const reviewsCollection = client.db('fsaDb').collection('reviews');
+    const schoolsCollection = client.db('fsaDb').collection('schools');
+    const eventsCollection = client.db('fsaDb').collection('newEvents');
 
 
     app.post('/jwt', (req, res) => {
@@ -98,6 +100,17 @@ async function run() {
       res.send(result)
     })
 
+    // schools 
+    app.get('/schools' , async(req , res) =>{
+      const result = await schoolsCollection.find().toArray()
+      res.send(result)
+    })
+
+    // newEvents
+    app.get('/events', async(req, res) =>{
+      const result = await eventsCollection.find().toArray();
+      res.send(result)
+    })
 
 
     // save user info in db
